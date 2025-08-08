@@ -105,27 +105,14 @@ def create_driver():
     chrome_options.add_argument("--disable-features=IsolateOrigins,site-per-process")
     service = Service(executable_path="/usr/local/bin/chromedriver")
     
-    try:
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver = webdriver.Chrome(service=service, options=chrome_options)     
+    return driver
 
-        # Mask headless browser as normal browser
-        driver.execute_cdp_cmd('Network.setUserAgentOverride', {
-            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
-        })
-        driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-            'source': '''
-                Object.defineProperty(navigator, 'webdriver', {
-                    get: () => undefined
-                });
-            '''
-        })
-        return driver
+
     except Exception as e:
         logger.error(f"Driver creation failed: {str(e)}")
         return None
     
-    
-
 def validate_credentials(username: str, password: str) -> bool:
     """Validate affiliate credentials by attempting login and return available currencies"""
     driver = create_driver()
