@@ -105,8 +105,7 @@ def create_driver():
         chrome_options.add_argument("--allow-running-insecure-content")
         chrome_options.add_argument("--disable-features=IsolateOrigins,site-per-process")
         
-        service = Service(executable_path="/usr/local/bin/chromedriver")
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
         return driver
 
     except Exception as e:
