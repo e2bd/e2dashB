@@ -85,33 +85,34 @@ def get_malaysia_time():
     return datetime.now(MYT)
 
 def create_driver():
-
-    chrome_options = Options()
-    
-    # Enhanced stealth options
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36")
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option('useAutomationExtension', False)
-    
-    # Additional stealth parameters
-    chrome_options.add_argument("--disable-web-security")
-    chrome_options.add_argument("--allow-running-insecure-content")
-    chrome_options.add_argument("--disable-features=IsolateOrigins,site-per-process")
-    service = Service(executable_path="/usr/local/bin/chromedriver")
-    
-    driver = webdriver.Chrome(service=service, options=chrome_options)     
-    return driver
-
+    try:
+        chrome_options = Options()
+        # headless + container flags
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        # stealth
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_argument(
+            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+        )
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option("useAutomationExtension", False)
+        chrome_options.add_argument("--disable-web-security")
+        chrome_options.add_argument("--allow-running-insecure-content")
+        chrome_options.add_argument("--disable-features=IsolateOrigins,site-per-process")
+        
+        service = Service(executable_path="/usr/local/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        return driver
 
     except Exception as e:
-        logger.error(f"Driver creation failed: {str(e)}")
+        logger.error(f"Driver creation failed: {e}")
         return None
+
     
 def validate_credentials(username: str, password: str) -> bool:
     """Validate affiliate credentials by attempting login and return available currencies"""
