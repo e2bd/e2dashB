@@ -1,20 +1,16 @@
-# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ┃ Dockerfile for E2 Dashboard Bot (Koyeb / Container)
-# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 FROM python:3.11-slim-bullseye
 
-# Environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     DISPLAY=:99 \
     PATH="/usr/local/bin:${PATH}" \
-    HOME=/home/appuser \
-    WDM_CACHE_PATH="" \
+    CHROME_BIN="/usr/bin/google-chrome-stable" \
     CHROMEDRIVER_PATH="/usr/local/bin/chromedriver" \
-    CHROME_BIN="/usr/bin/google-chrome-stable"
+    WDM_LOCAL="1" \
+    WDM_LOG_LEVEL="0"
 
-# 1) Install system dependencies
+# Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         wget gnupg ca-certificates xvfb unzip xauth \
@@ -28,51 +24,44 @@ RUN apt-get update && \
         libdrm2 libxkbcommon0 libxshmfence1 && \
     rm -rf /var/lib/apt/lists/*
 
-# 2) Install Google Chrome
+# Install Chrome
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -yf && \
-    rm google-chrome-stable_current_amd64.deb && \
-    google-chrome-stable --version
+    rm google-chrome-stable_current_amd64.deb
 
-# 3) Install matching ChromeDriver
-RUN CHROME_VER=$(google-chrome-stable --version | awk '{print $3}') && \
-    echo "→ Chrome version: $CHROME_VER" && \
+# Install ChromeDriver
+RUN CHROME_MAJOR_VERSION=$(google-chrome-stable --version | sed -E 's/.* ([0-9]+)\..*/\1/') && \
+    CHROME_FULL_VERSION=$(google-chrome-stable --version | awk '{print $3}') && \
+    echo "Chrome version: $CHROME_FULL_VERSION" && \
     wget -qO /tmp/chromedriver.zip \
-      "https://storage.googleapis.com/chrome-for-testing-public/$CHROME_VER/linux64/chromedriver-linux64.zip" && \
+      "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROME_FULL_VERSION/linux64/chromedriver-linux64.zip" && \
     unzip -j /tmp/chromedriver.zip "chromedriver-linux64/chromedriver" -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/chromedriver && \
     rm /tmp/chromedriver.zip && \
-    chromedriver --version
+    ln -s /usr/local/bin/chromedriver /usr/bin/chromedriver
 
-# 4) Verify Chrome and ChromeDriver
-RUN ldd /usr/bin/google-chrome-stable && \
-    ldd /usr/local/bin/chromedriver && \
-    google-chrome-stable --version && \
-    chromedriver --version
+# Verify installations
+RUN google-chrome-stable --version && \
+    chromedriver --version && \
+    ldd /usr/bin/google-chrome-stable && \
+    ldd /usr/local/bin/chromedriver
 
-# 5) Create non-root user with proper permissions
+# Create app user
 RUN groupadd -r appuser && \
     useradd -r -g appuser -m -d /home/appuser appuser && \
     chown -R appuser:appuser /home/appuser && \
-    chmod 755 /home/appuser && \
     chmod 755 /usr/local/bin/chromedriver
 
-# 6) Allow non-root user to run Chrome (Koyeb-specific)
+# Allow non-root Chrome
 RUN echo 'kernel.unprivileged_userns_clone=1' > /etc/sysctl.d/userns.conf
 
-# 7) Set up application directory
 WORKDIR /app
 COPY requirements.txt ./
-
-# 8) Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 9) Copy application files
 COPY . .
 
-# 10) Set user and permissions
 USER appuser
 
-# 11) Launch command with Xvfb
 CMD ["sh", "-c", "xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' python bot.py"]
