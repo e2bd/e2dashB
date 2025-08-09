@@ -30,7 +30,11 @@ from pathlib import Path
 from flask import Flask, Response, render_template, make_response, jsonify
 from datetime import datetime, timezone, timedelta
 
-
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -109,13 +113,6 @@ supabase_client = supabase.create_client(SUPABASE_URL, SUPABASE_KEY)
 # Conversation states
 USERNAME, PASSWORD = range(2)
 REMOVE_USERNAME = 2  # New state for removal
-
-# Configure logger
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
 
 MYT = timezone(timedelta(hours=8))
 
