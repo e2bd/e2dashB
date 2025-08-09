@@ -56,19 +56,23 @@ history = deque(maxlen=HISTORY_SIZE)
 
 def poller():
     """Background thread that polls TARGET_URL and appends ms or None to history."""
+    logger.info("Poller thread running, target=%s", TARGET_URL)
     while True:
         t0 = time.time()
         try:
-            # server-side request so no CORS issues
             r = requests.get(TARGET_URL, timeout=6)
             rt = int((time.time() - t0) * 1000)
             if r.ok:
                 history.append(rt)
+                logger.info("Probe ok: %sms (history=%d)", rt, len(history))
             else:
                 history.append(None)
-        except Exception:
+                logger.warning("Probe returned status %s (history=%d)", r.status_code, len(history))
+        except Exception as e:
             history.append(None)
+            logger.exception("Poller exception (appending None). History size=%d", len(history))
         time.sleep(POLL_INTERVAL)
+
 
 @app.route('/status_history')
 def status_history():
@@ -81,6 +85,8 @@ def status_history():
 # Run in a separate thread
 import threading
 threading.Thread(target=lambda: app.run(host='0.0.0.0', port=7070), daemon=True).start()
+
+threading.Thread(target=poller, daemon=True).start()
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 HELP_TEXT = (TEMPLATES_DIR / "help.html").read_text(encoding="utf-8")
