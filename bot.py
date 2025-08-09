@@ -1,5 +1,6 @@
 import logging
 import random
+import requests
 import time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -45,6 +46,36 @@ def index():
 def help_page():
     # serves templates/help.html
     return render_template('help.html')
+
+TARGET_URL = os.getenv("TARGET_URL", "http://127.0.0.1:7070/healthz")
+POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", 10))   # seconds between probes
+HISTORY_SIZE = int(os.getenv("HISTORY_SIZE", 200))    # number of samples to keep
+
+history = deque(maxlen=HISTORY_SIZE)
+
+def poller():
+    """Background thread that polls TARGET_URL and appends ms or None to history."""
+    while True:
+        t0 = time.time()
+        try:
+            # server-side request so no CORS issues
+            r = requests.get(TARGET_URL, timeout=6)
+            rt = int((time.time() - t0) * 1000)
+            if r.ok:
+                history.append(rt)
+            else:
+                history.append(None)
+        except Exception:
+            history.append(None)
+        time.sleep(POLL_INTERVAL)
+
+@app.route('/status_history')
+def status_history():
+    """Return the recent probe history as JSON: { history: [ms|null, ...] }"""
+    resp = make_response(jsonify({"history": list(history)}), 200)
+    resp.headers['Access-Control-Allow-Origin'] = '*'   # allow client fetch from other origins
+    return resp
+
 
 # Run in a separate thread
 import threading
