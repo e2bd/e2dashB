@@ -30,9 +30,35 @@
     align-items:flex-start;
     color:rgba(199,203,203,0.95);
     font-size:0.95rem;
+    width: 100%;
   }
   .meta-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   .meta-row b{min-width:70px;display:inline-block}
+  
+  /* NEW: Better alignment for metrics */
+  .metric-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  .metric-row {
+    display: flex;
+    gap: 16px;
+  }
+  .metric-item {
+    min-width: 100px;
+  }
+  .metric-label {
+    display: inline-block;
+    min-width: 90px;
+    color: var(--neutral);
+  }
+  .metric-value {
+    font-weight: bold;
+    color: var(--fg);
+  }
 
   .status-pill{
     padding:4px 8px;border-radius:999px;font-weight:700;
@@ -49,27 +75,31 @@
   .bars {
     display:flex;
     align-items:flex-end;
-    gap:6px;
-    width:640px;       /* adjust width as you wish */
-    height:86px;       /* height of the bar area */
+    gap:2px; /* Reduced gap for denser bars */
+    width:640px;
+    height:86px;
     margin-top:6px;
     padding:8px 12px;
     border-radius:12px;
-    background:linear-gradient(0deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
-    box-shadow: 0 6px 18px rgba(0,0,0,0.6) inset;
+    background: linear-gradient(0deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+    backdrop-filter: blur(10px); /* Add blur effect */
+    -webkit-backdrop-filter: blur(10px); /* For Safari */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6) inset, 0 0 0 1px rgba(255,255,255,0.05);
   }
   .bar {
-    width:12px;
+    width:8px; /* Thinner bars */
     background:rgba(255,255,255,0.06);
-    border-radius:8px;
+    border-radius:4px 4px 0 0; /* Rounded top only */
     transition:height 400ms cubic-bezier(.2,.9,.3,1), background 300ms;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     min-height:6px;
     display:inline-block;
   }
+  /* NEW: Color thresholds */
   .bar.good{background:linear-gradient(180deg, rgba(117,224,117,0.95), rgba(37,165,37,0.9))}
-  .bar.slow{background:linear-gradient(180deg, rgba(241,162,8,0.95), rgba(200,120,20,0.9))}
-  .bar.fail{background:linear-gradient(180deg, rgba(255,107,107,0.95), rgba(200,70,70,0.9))}
+  .bar.warn{background:linear-gradient(180deg, rgba(241,162,8,0.95), rgba(200,120,20,0.9))}
+  .bar.bad{background:linear-gradient(180deg, rgba(255,107,107,0.95), rgba(200,70,70,0.9))}
+  .bar.fail{background:linear-gradient(180deg, rgba(150,50,50,0.95), rgba(100,30,30,0.9))}
 
   /* small info now removed from center and moved bottom-left */
   .info {font-size:0.95rem;color:rgba(199,203,203,0.9)}
@@ -88,6 +118,10 @@
     .bars, canvas{width:92vw}
     h1{font-size:2.4rem}
     .status-text{font-size:1.1rem}
+    .metric-row {
+      flex-direction: column;
+      gap: 4px;
+    }
   }
 </style>
 </head>
@@ -112,22 +146,43 @@
 
   <div class="bottom-left pos">
     <div class="meta-block">
-      <!-- moved meta here -->
-      <div id="meta" class="meta-row">
-        <div><b>Last</b><span id="meta-last">—</span></div>
-        <div><b>Samples</b><span id="meta-samples">0</span></div>
-        <div><b>Avg</b><span id="meta-avg">—</span></div>
-      </div>
-      <div class="meta-row">
-        <div><b>P95</b><span id="meta-p95">—</span></div>
-        <div><b>Failures</b><span id="meta-fails">0</span></div>
-        <div><b>Uptime</b><span id="meta-up">—</span></div>
+      <!-- REVISED METRICS SECTION -->
+      <div class="metric-group">
+        <div class="metric-row">
+          <div class="metric-item">
+            <span class="metric-label">ping:</span>
+            <span id="meta-ping" class="metric-value">—</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">last:</span>
+            <span id="meta-last" class="metric-value">—</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">average:</span>
+            <span id="meta-avg" class="metric-value">—</span>
+          </div>
+        </div>
+        
+        <div class="metric-row">
+          <div class="metric-item">
+            <span class="metric-label">Samples:</span>
+            <span id="meta-samples" class="metric-value">0</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Failures:</span>
+            <span id="meta-fails" class="metric-value">0</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Uptime:</span>
+            <span id="meta-up" class="metric-value">—</span>
+          </div>
+        </div>
       </div>
 
       <!-- Scraping check + status pill -->
       <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
-        <p id="scrapeStatus" class="status-text" style="margin:0">Scraping check (<span>#: </span><span class="status">Passed</span>)</p>
-        <div id="scrapePill" class="status-pill neutral">Passed</div>
+        <p id="scrapeStatus" class="status-text" style="margin:0">Scraping check (#: <span class="status">Passed</span>)</p>
+        <div id="scrapePill" class="status-pill passed">Passed</div>
       </div>
     </div>
   </div>
@@ -150,10 +205,10 @@ const POLL_MS = 5000;
 const MAX_BARS = 48; // number of bars to show
 
 const barsEl = document.getElementById('bars');
+const metaPing = document.getElementById('meta-ping');
 const metaLast = document.getElementById('meta-last');
 const metaSamples = document.getElementById('meta-samples');
 const metaAvg = document.getElementById('meta-avg');
-const metaP95 = document.getElementById('meta-p95');
 const metaFails = document.getElementById('meta-fails');
 const metaUp = document.getElementById('meta-up');
 const topStatusEl = document.getElementById('topStatus');
@@ -292,6 +347,14 @@ function drawSpark(data){
   }
 }
 
+// NEW: Color thresholds for bars
+function getBarClass(v) {
+  if (v === null) return 'fail';
+  if (v > 120) return 'bad';      // >120ms: red
+  if (v > 60) return 'warn';      // 61-120ms: yellow
+  return 'good';                  // <=60ms: green
+}
+
 // map ms -> class & height
 function applyToBars(values){
   const bars = Array.from(barsEl.children);
@@ -309,9 +372,8 @@ function applyToBars(values){
       // height proportional (small ms -> short bar)
       const pct = Math.min(1, v / Math.max(500, maxMS));
       h = Math.max(6, pct * barsEl.clientHeight);
-      if (v > 1000) { b.className = 'bar fail'; }
-      else if (v > 300) { b.className = 'bar slow'; }
-      else { b.className = 'bar good'; }
+      // NEW: Use color thresholds
+      b.className = 'bar ' + getBarClass(v);
     }
     b.style.height = Math.round(h) + 'px';
   }
@@ -341,10 +403,12 @@ async function fetchAndRender(){
     const failures = hist.filter(x=>x==null).length;
     const uptimePct = n ? Math.round(((n - failures)/n)*10000)/100 : 100;
     const stats = numericStats(hist);
+    
+    // Update metrics
+    metaPing.textContent = formatMs(last);
     metaLast.textContent = formatMs(last);
     metaSamples.textContent = n;
     metaAvg.textContent = stats.avg == null ? '—' : Math.round(stats.avg) + ' ms';
-    metaP95.textContent = stats.p95 == null ? '—' : Math.round(stats.p95) + ' ms';
     metaFails.textContent = failures;
     metaUp.textContent = uptimePct + '%';
 
@@ -353,20 +417,19 @@ async function fetchAndRender(){
     topStatusEl.style.color = (last===null ? 'var(--bad)' : 'var(--green)');
 
     // scrape pill: "Passed" green if bot online; neutral if offline but scraping says passed
-    const scrapePassed = true; // keep the textual "Passed" as before, but color depends on last
     if(last !== null){
       scrapePill.className = 'status-pill passed';
-      scrapePill.textContent = 'Passed — Online';
+      scrapePill.textContent = 'Passed';
     } else {
       scrapePill.className = 'status-pill neutral';
-      scrapePill.textContent = 'Passed — Offline';
+      scrapePill.textContent = 'Offline';
     }
 
   }catch(e){
+    metaPing.textContent = '—';
     metaLast.textContent = '—';
     metaSamples.textContent = 0;
     metaAvg.textContent = '—';
-    metaP95.textContent = '—';
     metaFails.textContent = 0;
     metaUp.textContent = '0%';
     topStatusEl.textContent = 'Bot offline';
