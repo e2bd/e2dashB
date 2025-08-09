@@ -4,16 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E2 Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #000; 
-            --fg: #C7CBCB; 
-            --green: #75E075; 
-            --warn: #f1a208; 
-            --bad: #ff6b6b;
-            --neutral: #8b8f8f; 
-            --accent: rgba(117,224,117,0.95);
+            --bg: #0a0e17;
+            --card-bg: rgba(18, 25, 40, 0.85);
+            --text: #ffffff;
+            --text-secondary: #c7cbcb;
+            --green: #75e075;
+            --yellow: #f1a208;
+            --red: #ff6b6b;
+            --accent: #4d8cff;
+            --border: rgba(255, 255, 255, 0.08);
         }
         
         * {
@@ -22,321 +24,344 @@
             box-sizing: border-box;
         }
         
-        html, body {
-            height: 100%;
-            background: var(--bg);
-            color: var(--fg);
-            font-family: 'Audiowide', sans-serif;
-            overflow: hidden;
-        }
-        
         body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            padding: 15px;
-            position: relative;
-        }
-        
-        .header {
-            text-align: center;
-            padding: 10px 0;
-            position: relative;
-            z-index: 1;
-        }
-        
-        h1 {
-            font-size: clamp(2rem, 6vw, 4rem);
-            margin: 0;
-            position: relative;
-            display: inline-block;
-        }
-        
-        h1 .dash {
-            color: var(--green);
-        }
-        
-        .status-banner {
-            background: rgba(117, 224, 117, 0.15);
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-size: clamp(1.2rem, 3vw, 1.9rem);
-            text-align: center;
-            margin: 10px auto;
-            max-width: 90%;
-            backdrop-filter: blur(4px);
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(30, 60, 120, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(117, 224, 117, 0.05) 0%, transparent 20%);
         }
         
         .dashboard-container {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            gap: 20px;
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
+            flex: 1;
         }
         
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            width: 100%;
+        header {
+            text-align: center;
+            padding: 30px 0;
+            position: relative;
         }
         
-        .metric-card {
-            background: rgba(30, 30, 30, 0.6);
-            border-radius: 12px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        .metric-card h3 {
-            color: var(--neutral);
-            font-size: 1.1rem;
+        h1 {
+            font-family: 'Audiowide', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 3.5rem);
             margin-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 8px;
+            background: linear-gradient(to right, var(--text), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
         }
         
-        .metric-row {
+        .status-banner {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 50px;
+            background: rgba(117, 224, 117, 0.15);
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            font-weight: 500;
+            color: var(--green);
+            backdrop-filter: blur(5px);
+            margin: 15px 0;
+            border: 1px solid rgba(117, 224, 117, 0.2);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .card-title::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--accent);
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .metric {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: clamp(0.9rem, 2vw, 1rem);
+            flex-direction: column;
         }
         
         .metric-label {
-            color: var(--neutral);
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .metric-value {
-            font-weight: bold;
-            color: var(--fg);
-            text-align: right;
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: var(--text);
+            letter-spacing: -0.5px;
         }
         
-        .bars {
+        .metric-sub {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .status-item {
             display: flex;
-            align-items: flex-end;
-            gap: 3px;
-            height: 120px;
+            flex-direction: column;
+            align-items: center;
             padding: 15px;
             border-radius: 12px;
-            background: linear-gradient(0deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
-            backdrop-filter: blur(10px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.6) inset;
-            margin-top: 10px;
-            overflow-x: auto;
+            background: rgba(30, 40, 60, 0.4);
+            border: 1px solid var(--border);
         }
         
-        .bar {
-            width: 8px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 4px 4px 0 0;
-            min-height: 6px;
-            flex-shrink: 0;
-            transition: height 0.4s ease, background 0.3s;
+        .status-value {
+            font-size: 1.4rem;
+            font-weight: 500;
+            margin: 10px 0 5px;
         }
         
-        .bar.good { background: linear-gradient(180deg, rgba(117,224,117,0.95), rgba(37,165,37,0.9)); }
-        .bar.warn { background: linear-gradient(180deg, rgba(241,162,8,0.95), rgba(200,120,20,0.9)); }
-        .bar.bad { background: linear-gradient(180deg, rgba(255,107,107,0.95), rgba(200,70,70,0.9)); }
-        .bar.fail { background: linear-gradient(180deg, rgba(150,50,50,0.95), rgba(100,30,30,0.9)); }
-        
-        .status-pill {
-            padding: 5px 12px;
-            border-radius: 999px;
-            font-weight: 700;
+        .status-label {
             font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
+            color: var(--text-secondary);
         }
         
-        .status-pill.passed { background: rgba(117,224,117,0.12); color: var(--green); }
-        .status-pill.neutral { background: rgba(255,255,255,0.03); color: var(--neutral); }
-        .status-pill.failed { background: rgba(255,107,107,0.12); color: var(--bad); }
+        .bot-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .status-200 {
+            background: rgba(117, 224, 117, 0.15);
+            color: var(--green);
+        }
+        
+        .status-404 {
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--red);
+        }
+        
+        .status-500 {
+            background: rgba(241, 162, 8, 0.15);
+            color: var(--yellow);
+        }
         
         .scraping-status {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-top: 15px;
-            font-size: clamp(1rem, 2.5vw, 1.2rem);
-            background: rgba(20, 20, 20, 0.7);
-            padding: 12px 15px;
-            border-radius: 8px;
-            backdrop-filter: blur(4px);
+            justify-content: space-between;
+            padding: 20px;
+            background: rgba(30, 40, 60, 0.4);
+            border-radius: 12px;
+            margin-top: 25px;
+            border: 1px solid var(--border);
         }
         
-        .footer {
+        .scraping-text {
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+        
+        .status-indicator {
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .status-passed {
+            background: rgba(117, 224, 117, 0.15);
+            color: var(--green);
+        }
+        
+        .status-failed {
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--red);
+        }
+        
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 30px 0;
+        }
+        
+        footer {
             text-align: center;
-            padding: 15px;
+            padding: 30px 0;
+            color: var(--text-secondary);
             font-size: 0.9rem;
-            color: var(--neutral);
-            margin-top: auto;
-        }
-        
-        .glowing-border {
-            position: relative;
-        }
-        
-        .glowing-border::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--green), rgba(117,224,117,0.3), transparent);
-            border-radius: 14px;
-            z-index: -1;
-            animation: glow 3s infinite alternate;
-        }
-        
-        @keyframes glow {
-            0% { opacity: 0.3; }
-            100% { opacity: 0.7; }
+            margin-top: 40px;
         }
         
         @media (max-width: 768px) {
-            .metrics-grid {
+            .dashboard-grid {
                 grid-template-columns: 1fr;
             }
             
-            .metric-card {
-                padding: 15px;
+            .metric-grid {
+                grid-template-columns: 1fr;
             }
             
-            .bars {
-                height: 100px;
+            .status-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
         
         @media (max-width: 480px) {
-            .metric-row {
-                flex-direction: column;
-                gap: 3px;
+            .status-grid {
+                grid-template-columns: 1fr;
             }
             
-            .metric-value {
-                text-align: left;
+            .card {
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>E2 <span class="dash">Dashboard</span></h1>
-        <div class="status-banner" id="topStatus">Bot is alive!!...</div>
-    </div>
-    
     <div class="dashboard-container">
-        <div class="metrics-grid">
-            <div class="metric-card glowing-border">
-                <h3>Response Metrics</h3>
-                <div class="metric-row">
-                    <span class="metric-label">Ping:</span>
-                    <span class="metric-value" id="meta-ping">17 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Last:</span>
-                    <span class="metric-value" id="meta-last">4 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Average:</span>
-                    <span class="metric-value" id="meta-avg">5 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Samples:</span>
-                    <span class="metric-value" id="meta-samples">1,250</span>
-                </div>
-            </div>
-            
-            <div class="metric-card glowing-border">
-                <h3>Status Metrics</h3>
-                <div class="metric-row">
-                    <span class="metric-label">Failures:</span>
-                    <span class="metric-value" id="meta-fails">3</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Uptime:</span>
-                    <span class="metric-value" id="meta-up">100%</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Max Response:</span>
-                    <span class="metric-value" id="meta-max">42 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Min Response:</span>
-                    <span class="metric-value" id="meta-min">2 ms</span>
-                </div>
-            </div>
-        </div>
+        <header>
+            <h1>E2 Dashboard</h1>
+            <div class="status-banner">Bot is alive!!...</div>
+        </header>
         
-        <div class="metric-card glowing-border">
-            <h3>Performance Status</h3>
-            <div class="bars" id="bars"></div>
+        <div class="dashboard-grid">
+            <div class="card">
+                <h2 class="card-title">Response Metrics</h2>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <span class="metric-label">Ping</span>
+                        <span class="metric-value">17 ms</span>
+                        <span class="metric-sub">Last: 4 ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Average</span>
+                        <span class="metric-value">5 ms</span>
+                        <span class="metric-sub">Samples: 1,250</span>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="scraping-status">
+                    <span class="scraping-text">Scraping check (#: <span class="status-passed">Passed</span>)</span>
+                </div>
+            </div>
             
-            <div class="scraping-status">
-                <span>Scraping check (#: <span>Passed</span>)</span>
-                <div class="status-pill passed" id="scrapePill">Passed</div>
+            <div class="card">
+                <h2 class="card-title">Status Metrics</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="bot-status status-200">200</div>
+                        <div class="status-value">Online</div>
+                        <div class="status-label">Current Status</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">3</div>
+                        <div class="status-label">Failures</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">100%</div>
+                        <div class="status-label">Uptime</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">42 ms</div>
+                        <div class="status-label">Max Response</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">2 ms</div>
+                        <div class="status-label">Min Response</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">98.7%</div>
+                        <div class="status-label">Success Rate</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="footer">
-        E2 Monitoring System • Real-time Dashboard
-    </div>
+    <footer>
+        E2 Monitoring System • Real-time Dashboard • Updated: 2023-08-09
+    </footer>
     
     <script>
-        // Create dynamic bars
-        function createBars() {
-            const barsEl = document.getElementById('bars');
-            barsEl.innerHTML = '';
+        // In a real implementation, this would fetch from an API
+        // For this demo, we'll simulate stable metrics
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up scraping status
+            const scrapingStatus = document.querySelector('.scraping-text .status-passed');
             
-            const barCount = Math.min(48, Math.floor(window.innerWidth / 12));
-            
-            for(let i = 0; i < barCount; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'bar';
+            // Simulate status changes (in real app this would come from API)
+            function simulateStatusChange() {
+                const statuses = ['Passed', 'Failed'];
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
                 
-                // Random height for demo
-                const height = 10 + Math.random() * 90;
-                bar.style.height = `${height}%`;
+                scrapingStatus.textContent = status;
+                scrapingStatus.className = status === 'Passed' ? 'status-passed' : 'status-failed';
                 
-                // Assign status class
-                if (height < 40) bar.classList.add('good');
-                else if (height < 70) bar.classList.add('warn');
-                else if (height < 90) bar.classList.add('bad');
-                else bar.classList.add('fail');
-                
-                barsEl.appendChild(bar);
+                // Change status again after 10 seconds
+                setTimeout(simulateStatusChange, 10000);
             }
-        }
-        
-        // Update metrics for demo
-        function updateMetrics() {
-            document.getElementById('meta-ping').textContent = `${Math.floor(10 + Math.random() * 20)} ms`;
-            document.getElementById('meta-last').textContent = `${Math.floor(2 + Math.random() * 8)} ms`;
-            document.getElementById('meta-avg').textContent = `${Math.floor(4 + Math.random() * 6)} ms`;
-            document.getElementById('meta-samples').textContent = (1250 + Math.floor(Math.random() * 50)).toLocaleString();
-        }
-        
-        // Initial setup
-        window.addEventListener('load', () => {
-            createBars();
-            updateMetrics();
             
-            // Update metrics every 5 seconds for demo
-            setInterval(updateMetrics, 5000);
-            
-            // Recreate bars on resize
-            window.addEventListener('resize', createBars);
+            // Start simulation
+            setTimeout(simulateStatusChange, 10000);
         });
     </script>
 </body>
