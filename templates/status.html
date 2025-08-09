@@ -4,18 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E2 Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0e17;
-            --card-bg: rgba(18, 25, 40, 0.85);
-            --text: #ffffff;
-            --text-secondary: #c7cbcb;
+            --bg: #000;
+            --fg: #ffffff;
             --green: #75e075;
             --yellow: #f1a208;
             --red: #ff6b6b;
-            --accent: #4d8cff;
-            --border: rgba(255, 255, 255, 0.08);
+            --neutral: #8b8f8f;
+            --card-bg: rgba(30, 30, 30, 0.7);
         }
         
         * {
@@ -25,343 +23,339 @@
         }
         
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Audiowide', sans-serif;
             background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
+            color: var(--fg);
+            height: 100vh;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
             padding: 20px;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(30, 60, 120, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(117, 224, 117, 0.05) 0%, transparent 20%);
         }
         
         .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 1000px;
             width: 100%;
-            flex: 1;
+            position: relative;
+            z-index: 2;
         }
         
         header {
             text-align: center;
-            padding: 30px 0;
-            position: relative;
+            margin-bottom: 30px;
         }
         
         h1 {
-            font-family: 'Audiowide', sans-serif;
-            font-size: clamp(2.5rem, 6vw, 3.5rem);
+            font-size: 3.5rem;
             margin-bottom: 15px;
-            background: linear-gradient(to right, var(--text), var(--accent));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: 1px;
+            color: var(--green);
+            text-shadow: 0 0 10px rgba(117, 224, 117, 0.5);
         }
         
         .status-banner {
-            display: inline-block;
-            padding: 10px 25px;
-            border-radius: 50px;
-            background: rgba(117, 224, 117, 0.15);
-            font-size: clamp(1.2rem, 3vw, 1.5rem);
-            font-weight: 500;
+            font-size: 1.8rem;
             color: var(--green);
-            backdrop-filter: blur(5px);
-            margin: 15px 0;
-            border: 1px solid rgba(117, 224, 117, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-block;
         }
         
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-        
-        .card {
+        .graph-container {
             background: var(--card-bg);
             border-radius: 16px;
-            padding: 30px;
+            padding: 25px;
+            margin-bottom: 30px;
             backdrop-filter: blur(10px);
-            border: 1px solid var(--border);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
         
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-        }
-        
-        .card-title {
-            font-size: 1.5rem;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-            font-weight: 500;
-            position: relative;
-        }
-        
-        .card-title::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            width: 50px;
-            height: 2px;
-            background: var(--accent);
-        }
-        
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-        
-        .metric {
+        .bars {
             display: flex;
-            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            height: 120px;
+            padding: 15px;
+            border-radius: 12px;
+            background: linear-gradient(0deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+            backdrop-filter: blur(5px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.6) inset;
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        
+        .bar {
+            width: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px 4px 0 0;
+            min-height: 6px;
+            flex-shrink: 0;
+        }
+        
+        .bar.good { background: linear-gradient(180deg, rgba(117,224,117,0.9), rgba(37,165,37,0.8)); }
+        .bar.warn { background: linear-gradient(180deg, rgba(241,162,8,0.9), rgba(200,120,20,0.8)); }
+        .bar.bad { background: linear-gradient(180deg, rgba(255,107,107,0.9), rgba(200,70,70,0.8)); }
+        
+        .sparkline {
+            height: 100px;
+            background: rgba(20, 20, 20, 0.5);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metrics-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .metrics-column {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            width: 48%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 1.2rem;
         }
         
         .metric-label {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            color: var(--neutral);
         }
         
         .metric-value {
-            font-size: 1.8rem;
-            font-weight: 500;
-            color: var(--text);
-            letter-spacing: -0.5px;
-        }
-        
-        .metric-sub {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-top: 3px;
-        }
-        
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-        }
-        
-        .status-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            border-radius: 12px;
-            background: rgba(30, 40, 60, 0.4);
-            border: 1px solid var(--border);
-        }
-        
-        .status-value {
-            font-size: 1.4rem;
-            font-weight: 500;
-            margin: 10px 0 5px;
-        }
-        
-        .status-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-        
-        .bot-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            margin-bottom: 10px;
+            font-weight: normal;
+            color: var(--fg);
+            text-align: right;
         }
         
         .status-200 {
-            background: rgba(117, 224, 117, 0.15);
             color: var(--green);
-        }
-        
-        .status-404 {
-            background: rgba(255, 107, 107, 0.15);
-            color: var(--red);
-        }
-        
-        .status-500 {
-            background: rgba(241, 162, 8, 0.15);
-            color: var(--yellow);
+            font-weight: bold;
         }
         
         .scraping-status {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 20px;
-            background: rgba(30, 40, 60, 0.4);
-            border-radius: 12px;
-            margin-top: 25px;
-            border: 1px solid var(--border);
         }
         
-        .scraping-text {
-            font-size: 1.1rem;
-            color: var(--text);
-        }
-        
-        .status-indicator {
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-weight: 500;
-            font-size: 1rem;
-        }
-        
-        .status-passed {
-            background: rgba(117, 224, 117, 0.15);
+        .scraping-passed {
             color: var(--green);
         }
         
-        .status-failed {
-            background: rgba(255, 107, 107, 0.15);
+        .scraping-failed {
             color: var(--red);
         }
         
-        .divider {
-            height: 1px;
-            background: var(--border);
-            margin: 30px 0;
+        footer {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: var(--neutral);
+            font-size: 0.9rem;
+            padding: 10px;
         }
         
-        footer {
-            text-align: center;
-            padding: 30px 0;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-top: 40px;
+        .bg-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(rgba(20, 30, 20, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(20, 30, 20, 0.2) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 1;
         }
         
         @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
+            h1 {
+                font-size: 2.5rem;
             }
             
-            .metric-grid {
-                grid-template-columns: 1fr;
+            .status-banner {
+                font-size: 1.4rem;
             }
             
-            .status-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .status-grid {
-                grid-template-columns: 1fr;
+            .metrics-container {
+                flex-direction: column;
+                gap: 20px;
             }
             
-            .card {
-                padding: 20px;
+            .metrics-column {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
+    <div class="bg-grid"></div>
+    
     <div class="dashboard-container">
         <header>
-            <h1>E2 Dashboard</h1>
-            <div class="status-banner">Bot is alive!!...</div>
+            <h1>E2 DASHBOARD</h1>
+            <div class="status-banner">BOT IS ALIVE!!...</div>
         </header>
         
-        <div class="dashboard-grid">
-            <div class="card">
-                <h2 class="card-title">Response Metrics</h2>
-                <div class="metric-grid">
-                    <div class="metric">
-                        <span class="metric-label">Ping</span>
-                        <span class="metric-value">17 ms</span>
-                        <span class="metric-sub">Last: 4 ms</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Average</span>
-                        <span class="metric-value">5 ms</span>
-                        <span class="metric-sub">Samples: 1,250</span>
-                    </div>
+        <div class="graph-container">
+            <div class="bars" id="bars"></div>
+            <div class="sparkline" id="sparkline"></div>
+        </div>
+        
+        <div class="metrics-container">
+            <div class="metrics-column">
+                <div class="metric-row">
+                    <span class="metric-label">SAMPLES:</span>
+                    <span class="metric-value" id="samples-value">1,250</span>
                 </div>
-                
-                <div class="divider"></div>
-                
-                <div class="scraping-status">
-                    <span class="scraping-text">Scraping check (#: <span class="status-passed">Passed</span>)</span>
+                <div class="metric-row">
+                    <span class="metric-label">PING:</span>
+                    <span class="metric-value" id="ping-value">17 ms</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">LAST:</span>
+                    <span class="metric-value" id="last-value">4 ms</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">AVERAGE:</span>
+                    <span class="metric-value" id="average-value">5 ms</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">UPTIME:</span>
+                    <span class="metric-value" id="uptime-value">100%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">FAILURES:</span>
+                    <span class="metric-value" id="failures-value">3</span>
+                </div>
+                <div class="metric-row scraping-status">
+                    <span class="metric-label">SCRAPING CHECK:</span>
+                    <span class="metric-value scraping-passed" id="scraping-value">PASSED</span>
                 </div>
             </div>
             
-            <div class="card">
-                <h2 class="card-title">Status Metrics</h2>
-                <div class="status-grid">
-                    <div class="status-item">
-                        <div class="bot-status status-200">200</div>
-                        <div class="status-value">Online</div>
-                        <div class="status-label">Current Status</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-value">3</div>
-                        <div class="status-label">Failures</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-value">100%</div>
-                        <div class="status-label">Uptime</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-value">42 ms</div>
-                        <div class="status-label">Max Response</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-value">2 ms</div>
-                        <div class="status-label">Min Response</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-value">98.7%</div>
-                        <div class="status-label">Success Rate</div>
-                    </div>
+            <div class="metrics-column">
+                <div class="metric-row">
+                    <span class="metric-label">MAX RESPONSE:</span>
+                    <span class="metric-value" id="max-value">42 ms</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">MIN RESPONSE:</span>
+                    <span class="metric-value" id="min-value">2 ms</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">SUCCESS RATE:</span>
+                    <span class="metric-value" id="success-value">98.7%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">ONLINE STATUS:</span>
+                    <span class="metric-value status-200" id="status-value">200</span>
+                </div>
+                <div class="metric-row" style="border-bottom: none; padding-top: 25px;">
+                    <span class="metric-value" style="text-align: center; width: 100%; font-size: 1.1rem; color: var(--neutral);">
+                        ALL SYSTEMS OPERATIONAL
+                    </span>
                 </div>
             </div>
         </div>
     </div>
     
     <footer>
-        E2 Monitoring System • Real-time Dashboard • Updated: 2023-08-09
+        E2 MONITORING SYSTEM • REAL-TIME DASHBOARD • UPDATED: 2023-08-09
     </footer>
     
     <script>
-        // In a real implementation, this would fetch from an API
-        // For this demo, we'll simulate stable metrics
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up scraping status
-            const scrapingStatus = document.querySelector('.scraping-text .status-passed');
+        // Create bars with varying heights and colors
+        function createBars() {
+            const barsContainer = document.getElementById('bars');
+            barsContainer.innerHTML = '';
             
-            // Simulate status changes (in real app this would come from API)
-            function simulateStatusChange() {
-                const statuses = ['Passed', 'Failed'];
-                const status = statuses[Math.floor(Math.random() * statuses.length)];
+            const barCount = 48;
+            
+            for(let i = 0; i < barCount; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
                 
-                scrapingStatus.textContent = status;
-                scrapingStatus.className = status === 'Passed' ? 'status-passed' : 'status-failed';
+                // Random height for demo
+                const height = 10 + Math.random() * 100;
+                bar.style.height = `${height}%`;
                 
-                // Change status again after 10 seconds
-                setTimeout(simulateStatusChange, 10000);
+                // Assign color based on height
+                if (height < 40) bar.classList.add('good');
+                else if (height < 70) bar.classList.add('warn');
+                else bar.classList.add('bad');
+                
+                barsContainer.appendChild(bar);
+            }
+        }
+        
+        // Create a simple sparkline
+        function createSparkline() {
+            const sparkline = document.getElementById('sparkline');
+            sparkline.innerHTML = '';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = sparkline.offsetWidth;
+            canvas.height = sparkline.offsetHeight;
+            sparkline.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Generate random data points
+            const data = [];
+            for(let i = 0; i < 50; i++) {
+                data.push(20 + Math.random() * 80);
             }
             
-            // Start simulation
-            setTimeout(simulateStatusChange, 10000);
+            // Draw sparkline
+            ctx.beginPath();
+            ctx.moveTo(0, height - (data[0]/100 * height));
+            
+            for(let i = 1; i < data.length; i++) {
+                const x = (i / data.length) * width;
+                const y = height - (data[i]/100 * height);
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.strokeStyle = 'rgba(117, 224, 117, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Fill area under the line
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.closePath();
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, 'rgba(117, 224, 117, 0.2)');
+            gradient.addColorStop(1, 'rgba(117, 224, 117, 0.05)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+        }
+        
+        // Initialize dashboard
+        window.addEventListener('load', () => {
+            createBars();
+            createSparkline();
+            
+            // Recreate sparkline on resize
+            window.addEventListener('resize', createSparkline);
         });
     </script>
 </body>
