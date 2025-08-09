@@ -13,7 +13,6 @@
             --yellow: #f1a208;
             --red: #ff6b6b;
             --neutral: #8b8f8f;
-            --accent: rgba(117,224,117,0.95);
         }
         
         * {
@@ -40,10 +39,9 @@
         }
         
         .dashboard-container {
-            max-width: 1000px;
             width: 100%;
+            max-width: 1000px;
             position: relative;
-            z-index: 2;
         }
         
         header {
@@ -54,7 +52,6 @@
         h1 {
             font-size: 3.5rem;
             margin-bottom: 15px;
-            text-align: center;
         }
         
         .e2-text {
@@ -68,12 +65,10 @@
         .status-banner {
             font-size: 1.8rem;
             color: var(--green);
-            padding: 10px 20px;
             display: inline-block;
         }
         
         .graph-container {
-            position: relative;
             margin-bottom: 30px;
         }
         
@@ -83,32 +78,23 @@
             gap: 4px;
             height: 100px;
             padding: 15px;
-            border-radius: 12px;
+            border-radius: 8px;
             background: rgba(30, 30, 30, 0.7);
-            backdrop-filter: blur(5px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.6) inset;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .bar {
-            width: 10px;
+            width: 8px;
             background: rgba(255,255,255,0.1);
             border-radius: 4px 4px 0 0;
             min-height: 6px;
             flex: 1;
+            transition: height 0.5s ease;
         }
         
-        .bar.good { background: linear-gradient(180deg, rgba(117,224,117,0.9), rgba(37,165,37,0.8)); }
-        .bar.warn { background: linear-gradient(180deg, rgba(241,162,8,0.9), rgba(200,120,20,0.8)); }
-        .bar.bad { background: linear-gradient(180deg, rgba(255,107,107,0.9), rgba(200,70,70,0.8)); }
-        
-        .sparkline {
-            height: 100px;
-            background: rgba(20, 20, 20, 0.5);
-            border-radius: 8px;
-            position: relative;
-            overflow: hidden;
-        }
+        .bar.good { background: var(--green); }
+        .bar.warn { background: var(--yellow); }
+        .bar.bad { background: var(--red); }
         
         .metrics-container {
             display: flex;
@@ -123,31 +109,26 @@
             background: rgba(30, 30, 30, 0.7);
             border-radius: 8px;
             padding: 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .metric-row {
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
         
         .metric-label {
             color: var(--neutral);
-            text-transform: lowercase;
         }
         
         .metric-value {
-            font-weight: normal;
             color: var(--fg);
             text-align: right;
         }
         
         .status-200 {
             color: var(--green);
-            font-weight: bold;
         }
         
         .scraping-passed {
@@ -156,19 +137,6 @@
         
         .scraping-failed {
             color: var(--red);
-        }
-        
-        .bg-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                linear-gradient(rgba(20, 30, 20, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(20, 30, 20, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
-            z-index: 1;
         }
         
         @media (max-width: 768px) {
@@ -192,8 +160,6 @@
     </style>
 </head>
 <body>
-    <div class="bg-grid"></div>
-    
     <div class="dashboard-container">
         <header>
             <h1><span class="e2-text">E2</span> <span class="dash-text">Dashboard</span></h1>
@@ -202,7 +168,6 @@
         
         <div class="graph-container">
             <div class="bars" id="bars"></div>
-            <div class="sparkline" id="sparkline"></div>
         </div>
         
         <div class="metrics-container">
@@ -259,7 +224,7 @@
     </div>
     
     <script>
-        // Create bars with varying heights and colors
+        // Create bars with mostly green status
         function createBars() {
             const barsContainer = document.getElementById('bars');
             barsContainer.innerHTML = '';
@@ -270,8 +235,19 @@
                 const bar = document.createElement('div');
                 bar.className = 'bar';
                 
-                // Random height for demo
-                const height = 10 + Math.random() * 90;
+                // Generate mostly low values (green)
+                let height;
+                if (i % 10 === 0) {
+                    // Occasionally a medium value (yellow)
+                    height = 50 + Math.random() * 30;
+                } else if (i % 20 === 0) {
+                    // Rarely a high value (red)
+                    height = 80 + Math.random() * 20;
+                } else {
+                    // Mostly low values (green)
+                    height = 10 + Math.random() * 40;
+                }
+                
                 bar.style.height = `${height}%`;
                 
                 // Assign color based on height
@@ -283,60 +259,17 @@
             }
         }
         
-        // Create a simple sparkline
-        function createSparkline() {
-            const sparkline = document.getElementById('sparkline');
-            sparkline.innerHTML = '';
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = sparkline.offsetWidth;
-            canvas.height = sparkline.offsetHeight;
-            sparkline.appendChild(canvas);
-            
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-            
-            // Generate random data points
-            const data = [];
-            for(let i = 0; i < 50; i++) {
-                data.push(20 + Math.random() * 80);
-            }
-            
-            // Draw sparkline
-            ctx.beginPath();
-            ctx.moveTo(0, height - (data[0]/100 * height));
-            
-            for(let i = 1; i < data.length; i++) {
-                const x = (i / data.length) * width;
-                const y = height - (data[i]/100 * height);
-                ctx.lineTo(x, y);
-            }
-            
-            ctx.strokeStyle = 'rgba(117, 224, 117, 0.7)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Fill area under the line
-            ctx.lineTo(width, height);
-            ctx.lineTo(0, height);
-            ctx.closePath();
-            
-            const gradient = ctx.createLinearGradient(0, 0, 0, height);
-            gradient.addColorStop(0, 'rgba(117, 224, 117, 0.2)');
-            gradient.addColorStop(1, 'rgba(117, 224, 117, 0.05)');
-            
-            ctx.fillStyle = gradient;
-            ctx.fill();
-        }
-        
         // Initialize dashboard
         window.addEventListener('load', () => {
             createBars();
-            createSparkline();
             
-            // Recreate sparkline on resize
-            window.addEventListener('resize', createSparkline);
+            // Update metrics every 5 seconds for demo
+            setInterval(() => {
+                document.getElementById('ping-value').textContent = 
+                    `${Math.floor(15 + Math.random() * 5)} ms`;
+                document.getElementById('last-value').textContent = 
+                    `${Math.floor(2 + Math.random() * 5)} ms`;
+            }, 5000);
         });
     </script>
 </body>
