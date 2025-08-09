@@ -27,7 +27,7 @@ import supabase
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, make_response
 from datetime import datetime, timezone, timedelta
 
 
