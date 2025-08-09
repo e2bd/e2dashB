@@ -35,23 +35,24 @@
             justify-content: center;
             position: relative;
             height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
         
         .dashboard-container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 800px;
             position: relative;
         }
         
         header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         h1 {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
         }
         
         .e2-text {
@@ -63,31 +64,31 @@
         }
         
         .status-banner {
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             color: var(--green);
             display: inline-block;
         }
         
         .graph-container {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         
         .bars {
             display: flex;
             align-items: flex-end;
-            gap: 4px;
-            height: 100px;
-            padding: 15px;
-            border-radius: 8px;
+            gap: 3px;
+            height: 70px;
+            padding: 10px;
+            border-radius: 6px;
             background: rgba(30, 30, 30, 0.7);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         .bar {
-            width: 8px;
+            width: 6px;
             background: rgba(255,255,255,0.1);
-            border-radius: 4px 4px 0 0;
-            min-height: 6px;
+            border-radius: 3px 3px 0 0;
+            min-height: 4px;
             flex: 1;
             transition: height 0.5s ease;
         }
@@ -96,35 +97,46 @@
         .bar.warn { background: var(--yellow); }
         .bar.bad { background: var(--red); }
         
+        .sparkline-container {
+            height: 60px;
+            background: rgba(20, 20, 20, 0.5);
+            border-radius: 6px;
+            padding: 5px;
+        }
+        
+        #sparkline {
+            width: 100%;
+            height: 100%;
+        }
+        
         .metrics-container {
             display: flex;
             justify-content: space-between;
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
+            font-size: 0.9rem;
         }
         
         .metrics-column {
-            background: rgba(30, 30, 30, 0.7);
-            border-radius: 8px;
-            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            width: 48%;
         }
         
         .metric-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            font-size: 0.95rem;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
         .metric-label {
             color: var(--neutral);
+            min-width: 120px;
         }
         
         .metric-value {
             color: var(--fg);
             text-align: right;
+            min-width: 70px;
         }
         
         .status-200 {
@@ -141,11 +153,19 @@
         
         @media (max-width: 768px) {
             h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
             
             .status-banner {
-                font-size: 1.4rem;
+                font-size: 1.1rem;
+            }
+            
+            .bars {
+                height: 60px;
+            }
+            
+            .sparkline-container {
+                height: 50px;
             }
             
             .metrics-container {
@@ -155,6 +175,20 @@
             
             .metrics-column {
                 width: 100%;
+            }
+            
+            .metric-row {
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .metric-label {
+                min-width: 100px;
             }
         }
     </style>
@@ -168,6 +202,9 @@
         
         <div class="graph-container">
             <div class="bars" id="bars"></div>
+            <div class="sparkline-container">
+                <canvas id="sparkline"></canvas>
+            </div>
         </div>
         
         <div class="metrics-container">
@@ -229,7 +266,7 @@
             const barsContainer = document.getElementById('bars');
             barsContainer.innerHTML = '';
             
-            const barCount = 48;
+            const barCount = 60;
             
             for(let i = 0; i < barCount; i++) {
                 const bar = document.createElement('div');
@@ -237,31 +274,94 @@
                 
                 // Generate mostly low values (green)
                 let height;
-                if (i % 10 === 0) {
+                if (i % 12 === 0) {
                     // Occasionally a medium value (yellow)
-                    height = 50 + Math.random() * 30;
-                } else if (i % 20 === 0) {
+                    height = 50 + Math.random() * 20;
+                } else if (i % 24 === 0) {
                     // Rarely a high value (red)
-                    height = 80 + Math.random() * 20;
+                    height = 70 + Math.random() * 20;
                 } else {
                     // Mostly low values (green)
-                    height = 10 + Math.random() * 40;
+                    height = 10 + Math.random() * 35;
                 }
                 
                 bar.style.height = `${height}%`;
                 
                 // Assign color based on height
                 if (height < 40) bar.classList.add('good');
-                else if (height < 70) bar.classList.add('warn');
+                else if (height < 65) bar.classList.add('warn');
                 else bar.classList.add('bad');
                 
                 barsContainer.appendChild(bar);
             }
         }
         
+        // Create a sparkline graph
+        function createSparkline() {
+            const canvas = document.getElementById('sparkline');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas dimensions
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Generate data points (mostly low values)
+            const data = [];
+            for(let i = 0; i < 50; i++) {
+                if (i % 8 === 0) {
+                    // Occasionally a medium value
+                    data.push(60 + Math.random() * 20);
+                } else if (i % 16 === 0) {
+                    // Rarely a high value
+                    data.push(80 + Math.random() * 15);
+                } else {
+                    // Mostly low values
+                    data.push(20 + Math.random() * 30);
+                }
+            }
+            
+            // Find min and max values
+            const minVal = Math.min(...data);
+            const maxVal = Math.max(...data);
+            const range = maxVal - minVal || 1;
+            
+            // Draw sparkline
+            ctx.beginPath();
+            ctx.moveTo(0, height - ((data[0] - minVal) / range * height));
+            
+            for(let i = 1; i < data.length; i++) {
+                const x = (i / (data.length - 1)) * width;
+                const y = height - ((data[i] - minVal) / range * height);
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.strokeStyle = 'rgba(117, 224, 117, 0.9)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Fill area under the line
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.closePath();
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, 'rgba(117, 224, 117, 0.15)');
+            gradient.addColorStop(1, 'rgba(117, 224, 117, 0.01)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+        }
+        
         // Initialize dashboard
         window.addEventListener('load', () => {
             createBars();
+            createSparkline();
+            
+            // Update sparkline on resize
+            window.addEventListener('resize', createSparkline);
             
             // Update metrics every 5 seconds for demo
             setInterval(() => {
