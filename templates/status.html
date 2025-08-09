@@ -1,52 +1,192 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>E2 Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap"
-    rel="stylesheet"
-  />
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      font-family: 'Audiowide', sans-serif;
-      color: #C7CBCB;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-    }
-    h1 {
-      font-size: 4rem;
-      margin: 0;
-    }
-    h1 .dash {
-      color: #75E075;
-    }
-    p {
-      font-size: 2rem;
-      margin: 1rem 0 0;
-    }
-    p .status {
-      color: #75E075;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>E2 Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --fg:#C7CBCB; --green:#75E075; --warn:#f1a208; --bad:#ff6b6b;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:'Audiowide',sans-serif}
+  body{display:flex;align-items:center;justify-content:center;position:relative;height:100vh;overflow:hidden}
+
+  h1{font-size:4rem;margin:0;z-index:1;text-align:center}
+  h1 .dash{color:var(--green)}
+
+  /* Top-left / bottom-left text */
+  .pos{position:absolute;left:20px;z-index:2;text-align:left}
+  .top-left{top:20px}
+  .bottom-left{bottom:20px}
+  .status-text{font-size:1.9rem;margin:0;color:var(--fg)}
+
+  /* Center container for title + status visuals */
+  .center-wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
+
+  /* Bars grid */
+  .bars {
+    display:flex;
+    align-items:flex-end;
+    gap:4px;
+    width:540px;       /* adjust width as you wish */
+    height:72px;       /* height of the bar area */
+    margin-top:6px;
+  }
+  .bar {
+    width:6px;
+    background:rgba(255,255,255,0.06);
+    border-radius:3px 3px 0 0;
+    transition:height 400ms ease, background 300ms ease;
+  }
+  .bar.good{background:var(--green)}
+  .bar.slow{background:var(--warn)}
+  .bar.fail{background:var(--bad)}
+
+  /* small info row */
+  .info {font-size:0.95rem;color:rgba(199,203,203,0.9)}
+
+  /* sparkline canvas */
+  canvas{background:transparent;width:540px;height:80px;display:block}
+
+  @media(max-width:560px){
+    .bars, canvas{width:92vw}
+    h1{font-size:2.4rem}
+    .status-text{font-size:1.1rem}
+  }
+</style>
 </head>
 <body>
-  <h1>
-    E2 <span class="dash">Dashboard</span>
-  </h1>
-  <p>Bot is alive!!...</p>
-  <p>
-    Scraping check (<span>#: </span><span class="status">Passed</span>)
-  </p>
+
+  <div class="top-left pos">
+    <p id="topStatus" class="status-text">Bot is alive!!...</p>
+  </div>
+
+  <div class="center-wrap">
+    <h1>E2 <span class="dash">Dashboard</span></h1>
+
+    <!-- Bars (will be filled by JS) -->
+    <div id="bars" class="bars" aria-hidden="true"></div>
+
+    <!-- small meta -->
+    <div class="info" id="meta">Checking...</div>
+
+    <!-- sparkline for response time -->
+    <canvas id="spark" width="540" height="80"></canvas>
+  </div>
+
+  <div class="bottom-left pos">
+    <p id="scrapeStatus" class="status-text">Scraping check (<span>#: </span><span class="status">Passed</span>)</p>
+  </div>
+
+<script>
+/*
+ Minimal renderer:
+ - Expects GET /status_history => { history: [ <ms|null> , ... ] }
+ - history newest at the end; values: number = response time in ms, null = failed request.
+ - Bar color thresholds:
+     ms === null -> fail (red)
+     ms > 1000 -> fail
+     ms > 300  -> slow (orange)
+     else -> good (green)
+ - Polls every 5s.
+*/
+
+const API = '/status_history';    // replace if necessary
+const POLL_MS = 5000;
+const MAX_BARS = 80; // number of bars to show (resize CSS width if you change)
+
+const barsEl = document.getElementById('bars');
+const metaEl = document.getElementById('meta');
+const topStatusEl = document.getElementById('topStatus');
+const spark = document.getElementById('spark');
+const ctx = spark.getContext('2d');
+
+function makeBars(count){
+  barsEl.innerHTML = '';
+  for(let i=0;i<count;i++){
+    const b = document.createElement('div');
+    b.className = 'bar';
+    b.style.height = '4px';
+    barsEl.appendChild(b);
+  }
+}
+
+// draw sparkline given an array of numbers (null -> zero / gap)
+function drawSpark(data){
+  const w = spark.width, h = spark.height;
+  ctx.clearRect(0,0,w,h);
+  if(!data || data.length===0) return;
+  // convert to numbers (failed -> max)
+  const nums = data.map(v => v===null ? Math.max(...data.filter(x=>x!=null), 2000 || 2000) : v);
+  const max = Math.max(...nums, 200); // avoid zero
+  const min = Math.min(...nums);
+  // compute step
+  const stepX = w / Math.max(1, data.length-1);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for(let i=0;i<data.length;i++){
+    const val = data[i];
+    const y = h - (( (val===null?max:val) - min) / (max-min || 1) * (h-6)) - 3;
+    const x = i*stepX;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle = 'rgba(117,224,117,0.95)';
+  ctx.stroke();
+}
+
+// map ms -> class & height
+function applyToBars(values){
+  const bars = Array.from(barsEl.children);
+  const samples = values.slice(-bars.length); // take last N
+  const maxMS = Math.max(...samples.filter(x=>x!=null), 1000);
+  for(let i=0;i<bars.length;i++){
+    const v = samples[i] !== undefined ? samples[i] : null;
+    const b = bars[i];
+    let h = 6;
+    if (v === null) {
+      h = barsEl.clientHeight * 0.95;
+      b.className = 'bar fail';
+    } else {
+      // height proportional (small ms -> short bar)
+      const pct = Math.min(1, v / Math.max(500, maxMS));
+      h = Math.max(4, pct * barsEl.clientHeight);
+      if (v > 1000) { b.className = 'bar fail'; }
+      else if (v > 300) { b.className = 'bar slow'; }
+      else { b.className = 'bar good'; }
+    }
+    b.style.height = Math.round(h) + 'px';
+  }
+}
+
+async function fetchAndRender(){
+  try{
+    const res = await fetch(API, {cache:'no-store'});
+    if (!res.ok) throw new Error('bad status '+res.status);
+    const j = await res.json();
+    const hist = Array.isArray(j.history) ? j.history : [];
+    // update bars and spark
+    makeBars(Math.min(MAX_BARS, Math.max(8, hist.length || 24)));
+    applyToBars(hist);
+    drawSpark(hist.slice(-Math.min(hist.length, 60)));
+    // meta text
+    const last = hist.length ? hist[hist.length-1] : null;
+    metaEl.textContent = `Last: ${last===null ? 'fail' : last + ' ms'} — samples: ${hist.length}`;
+    topStatusEl.textContent = (last===null ? 'Bot offline' : 'Bot is alive!!...');
+    topStatusEl.style.color = (last===null ? 'var(--bad)' : 'var(--green)');
+  }catch(e){
+    metaEl.textContent = 'Unable to fetch status';
+    topStatusEl.textContent = 'Bot offline';
+    topStatusEl.style.color = 'var(--bad)';
+    console.error(e);
+  } finally {
+    setTimeout(fetchAndRender, POLL_MS);
+  }
+}
+
+// init
+makeBars(40);
+fetchAndRender();
+</script>
 </body>
 </html>
