@@ -1,6 +1,7 @@
 import logging
 import random
 import requests
+from collections import deque
 import time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
