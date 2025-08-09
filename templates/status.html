@@ -42,6 +42,9 @@
             width: 100%;
             max-width: 800px;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         
         header {
@@ -70,7 +73,14 @@
         }
         
         .graph-container {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .bars-container {
+            background: #000;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
         }
         
         .bars {
@@ -78,10 +88,6 @@
             align-items: flex-end;
             gap: 3px;
             height: 70px;
-            padding: 10px;
-            border-radius: 6px;
-            background: rgba(30, 30, 30, 0.7);
-            margin-bottom: 15px;
         }
         
         .bar {
@@ -109,10 +115,17 @@
             height: 100%;
         }
         
+        .metrics-scroll-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: auto;
+        }
+        
         .metrics-container {
             display: flex;
             justify-content: space-between;
             font-size: 0.9rem;
+            min-width: 700px;
         }
         
         .metrics-column {
@@ -124,19 +137,19 @@
         .metric-row {
             display: flex;
             justify-content: space-between;
-            padding: 5px 0;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
         .metric-label {
             color: var(--neutral);
-            min-width: 120px;
+            min-width: 140px;
         }
         
         .metric-value {
             color: var(--fg);
             text-align: right;
-            min-width: 70px;
+            min-width: 100px;
         }
         
         .status-200 {
@@ -149,6 +162,14 @@
         
         .scraping-failed {
             color: var(--red);
+        }
+        
+        .uptime-display {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.9rem;
+            color: var(--neutral);
         }
         
         @media (max-width: 768px) {
@@ -168,17 +189,14 @@
                 height: 50px;
             }
             
-            .metrics-container {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .metrics-column {
-                width: 100%;
-            }
-            
             .metric-row {
                 font-size: 0.85rem;
+            }
+            
+            .uptime-display {
+                position: static;
+                text-align: right;
+                margin-top: 10px;
             }
         }
         
@@ -188,7 +206,11 @@
             }
             
             .metric-label {
-                min-width: 100px;
+                min-width: 120px;
+            }
+            
+            .metric-value {
+                min-width: 80px;
             }
         }
     </style>
@@ -201,66 +223,84 @@
         </header>
         
         <div class="graph-container">
-            <div class="bars" id="bars"></div>
+            <div class="bars-container">
+                <div class="bars" id="bars"></div>
+            </div>
             <div class="sparkline-container">
                 <canvas id="sparkline"></canvas>
             </div>
         </div>
         
-        <div class="metrics-container">
-            <div class="metrics-column">
-                <div class="metric-row">
-                    <span class="metric-label">samples:</span>
-                    <span class="metric-value" id="samples-value">1,250</span>
+        <div class="metrics-scroll-container">
+            <div class="metrics-container">
+                <div class="metrics-column">
+                    <div class="metric-row">
+                        <span class="metric-label">samples:</span>
+                        <span class="metric-value" id="samples-value">0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">ping:</span>
+                        <span class="metric-value" id="ping-value">0 ms</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">last:</span>
+                        <span class="metric-value" id="last-value">0 ms</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">average:</span>
+                        <span class="metric-value" id="average-value">0 ms</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">uptime:</span>
+                        <span class="metric-value" id="uptime-value">0%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">failures:</span>
+                        <span class="metric-value" id="failures-value">0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">scraping check:</span>
+                        <span class="metric-value scraping-passed" id="scraping-value">passed</span>
+                    </div>
                 </div>
-                <div class="metric-row">
-                    <span class="metric-label">ping:</span>
-                    <span class="metric-value" id="ping-value">17 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">last:</span>
-                    <span class="metric-value" id="last-value">4 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">average:</span>
-                    <span class="metric-value" id="average-value">5 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">uptime:</span>
-                    <span class="metric-value" id="uptime-value">100%</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">failures:</span>
-                    <span class="metric-value" id="failures-value">3</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">scraping check:</span>
-                    <span class="metric-value scraping-passed" id="scraping-value">passed</span>
-                </div>
-            </div>
-            
-            <div class="metrics-column">
-                <div class="metric-row">
-                    <span class="metric-label">max response:</span>
-                    <span class="metric-value" id="max-value">42 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">min response:</span>
-                    <span class="metric-value" id="min-value">2 ms</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">success rate:</span>
-                    <span class="metric-value" id="success-value">98.7%</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">online status:</span>
-                    <span class="metric-value status-200" id="status-value">200</span>
+                
+                <div class="metrics-column">
+                    <div class="metric-row">
+                        <span class="metric-label">max response:</span>
+                        <span class="metric-value" id="max-value">0 ms</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">min response:</span>
+                        <span class="metric-value" id="min-value">0 ms</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">success rate:</span>
+                        <span class="metric-value" id="success-value">0%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">online status:</span>
+                        <span class="metric-value status-200" id="status-value">200</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">deployment time:</span>
+                        <span class="metric-value" id="deploy-time">00:00:00</span>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <div class="uptime-display" id="uptime-display">Uptime: 00:00:00</div>
     </div>
     
     <script>
+        // Initialize variables
+        let startTime = Date.now();
+        let sampleCount = 0;
+        let responseTimes = [];
+        let maxResponse = 0;
+        let minResponse = Infinity;
+        let failures = 0;
+        
         // Create bars with mostly green status
         function createBars() {
             const barsContainer = document.getElementById('bars');
@@ -274,10 +314,10 @@
                 
                 // Generate mostly low values (green)
                 let height;
-                if (i % 12 === 0) {
+                if (i % 15 === 0) {
                     // Occasionally a medium value (yellow)
                     height = 50 + Math.random() * 20;
-                } else if (i % 24 === 0) {
+                } else if (i % 30 === 0) {
                     // Rarely a high value (red)
                     height = 70 + Math.random() * 20;
                 } else {
@@ -296,7 +336,7 @@
             }
         }
         
-        // Create a sparkline graph
+        // Create a stable sparkline graph
         function createSparkline() {
             const canvas = document.getElementById('sparkline');
             const ctx = canvas.getContext('2d');
@@ -308,19 +348,23 @@
             const width = canvas.width;
             const height = canvas.height;
             
-            // Generate data points (mostly low values)
+            // Generate stable data points (mostly low values)
             const data = [];
+            const baseValue = 20;
+            
             for(let i = 0; i < 50; i++) {
-                if (i % 8 === 0) {
+                let value;
+                if (i % 10 === 0) {
                     // Occasionally a medium value
-                    data.push(60 + Math.random() * 20);
-                } else if (i % 16 === 0) {
+                    value = baseValue + 30 + Math.random() * 20;
+                } else if (i % 20 === 0) {
                     // Rarely a high value
-                    data.push(80 + Math.random() * 15);
+                    value = baseValue + 50 + Math.random() * 15;
                 } else {
-                    // Mostly low values
-                    data.push(20 + Math.random() * 30);
+                    // Mostly low values with small variations
+                    value = baseValue + Math.random() * 15;
                 }
+                data.push(value);
             }
             
             // Find min and max values
@@ -355,21 +399,73 @@
             ctx.fill();
         }
         
+        // Format time to HH:MM:SS
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Update metrics
+        function updateMetrics() {
+            // Generate realistic demo data
+            const ping = Math.floor(10 + Math.random() * 10);
+            const last = Math.floor(1 + Math.random() * 5);
+            const avg = Math.floor(4 + Math.random() * 3);
+            const max = Math.floor(40 + Math.random() * 10);
+            const min = Math.floor(1 + Math.random() * 3);
+            const successRate = (98 + Math.random() * 1.5).toFixed(1);
+            
+            // Update DOM elements
+            document.getElementById('samples-value').textContent = sampleCount;
+            document.getElementById('ping-value').textContent = `${ping}ms`;
+            document.getElementById('last-value').textContent = `${last}ms`;
+            document.getElementById('average-value').textContent = `${avg}ms`;
+            document.getElementById('max-value').textContent = `${max}ms`;
+            document.getElementById('min-value').textContent = `${min}ms`;
+            document.getElementById('success-value').textContent = `${successRate}%`;
+            document.getElementById('uptime-value').textContent = '100%';
+            document.getElementById('deploy-time').textContent = formatTime(Date.now() - startTime);
+        }
+        
+        // Update uptime display
+        function updateUptime() {
+            const uptimeElement = document.getElementById('uptime-display');
+            const elapsed = Date.now() - startTime;
+            uptimeElement.textContent = `Uptime: ${formatTime(elapsed)}`;
+        }
+        
         // Initialize dashboard
         window.addEventListener('load', () => {
+            // Set start time to current deployment time
+            startTime = Date.now();
+            
             createBars();
             createSparkline();
             
             // Update sparkline on resize
             window.addEventListener('resize', createSparkline);
             
+            // Initial metrics update
+            updateMetrics();
+            updateUptime();
+            
+            // Increment sample count every 2 minutes
+            setInterval(() => {
+                sampleCount++;
+                updateMetrics();
+            }, 120000); // 120 seconds = 2 minutes
+            
             // Update metrics every 5 seconds for demo
             setInterval(() => {
-                document.getElementById('ping-value').textContent = 
-                    `${Math.floor(15 + Math.random() * 5)} ms`;
-                document.getElementById('last-value').textContent = 
-                    `${Math.floor(2 + Math.random() * 5)} ms`;
+                updateMetrics();
             }, 5000);
+            
+            // Update uptime every second
+            setInterval(updateUptime, 1000);
         });
     </script>
 </body>
