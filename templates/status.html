@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E2 Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
     * {
       box-sizing: border-box;
       margin: 0;
@@ -20,6 +21,10 @@
       padding: 20px;
       overflow-x: hidden;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     
     body::before {
@@ -52,7 +57,7 @@
     
     .container {
       max-width: 1200px;
-      margin: 0 auto;
+      width: 100%;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -360,13 +365,15 @@
   </div>
 
   <script>
+    // Deployment time (fixed when bot was deployed)
+    const deploymentTime = new Date("2025-08-09T12:47:32Z");
+    
     // Initialize canvas
     const canvas = document.getElementById('uptimeGraph');
     const ctx = canvas.getContext('2d');
     
     // Set initial start time
-    const startTime = new Date();
-    document.getElementById('start-time').textContent = startTime.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    document.getElementById('start-time').textContent = deploymentTime.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
     
     // Set canvas dimensions
     function setCanvasSize() {
@@ -442,7 +449,7 @@
       
       // Draw labels
       ctx.fillStyle = '#9CA3AF';
-      ctx.font = '12px Orbitron';
+      ctx.font = '12px Orbitron, Audiowide, sans-serif';
       ctx.textAlign = 'center';
       
       // X-axis labels (time)
@@ -495,10 +502,10 @@
       });
     }
     
-    // Calculate uptime dynamically
-    function calculateUptime(startTime) {
+    // Calculate uptime dynamically based on deployment time
+    function calculateUptime() {
       const now = new Date();
-      const diff = now - startTime;
+      const diff = now - deploymentTime;
       
       const seconds = Math.floor(diff / 1000);
       const hours = Math.floor(seconds / 3600);
@@ -519,14 +526,14 @@
     }
     
     // Update metrics with dynamic values
-    function updateMetrics(startTime) {
+    function updateMetrics() {
       // Update timestamp
       const now = new Date();
       const timestamp = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
       document.getElementById('timestamp').textContent = timestamp;
       
-      // Update uptime
-      const uptime = calculateUptime(startTime);
+      // Update uptime based on deployment time
+      const uptime = calculateUptime();
       document.getElementById('uptime').textContent = uptime.formatted;
       
       // Simulate metric changes
@@ -578,16 +585,14 @@
     
     // Initialize the dashboard
     function initDashboard() {
-      const startTime = new Date();
-      
       setCanvasSize();
-      updateMetrics(startTime);
+      updateMetrics();
       
       // Redraw graph when window is resized
       window.addEventListener('resize', setCanvasSize);
       
       // Update metrics every second
-      setInterval(() => updateMetrics(startTime), 1000);
+      setInterval(updateMetrics, 1000);
       
       // Redraw graph every 30 seconds
       setInterval(drawGraph, 30000);
