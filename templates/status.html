@@ -8,9 +8,10 @@
 <style>
   :root{
     --bg:#000; --fg:#C7CBCB; --green:#75E075; --warn:#f1a208; --bad:#ff6b6b;
+    --neutral:#8b8f8f; --accent: rgba(117,224,117,0.95);
   }
   html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:'Audiowide',sans-serif}
-  body{display:flex;align-items:center;justify-content:center;position:relative;height:100vh;overflow:hidden}
+  body{display:flex;align-items:center;justify-content:center;position:relative;height:100vh;overflow:hidden;padding:24px}
 
   h1{font-size:4rem;margin:0;z-index:1;text-align:center}
   h1 .dash{color:var(--green)}
@@ -21,35 +22,69 @@
   .bottom-left{bottom:20px}
   .status-text{font-size:1.9rem;margin:0;color:var(--fg)}
 
+  /* bottom-left meta block (moved here) */
+  .meta-block{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    align-items:flex-start;
+    color:rgba(199,203,203,0.95);
+    font-size:0.95rem;
+  }
+  .meta-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .meta-row b{min-width:70px;display:inline-block}
+
+  .status-pill{
+    padding:4px 8px;border-radius:999px;font-weight:700;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .status-pill.neutral{background:rgba(255,255,255,0.03);color:var(--neutral)}
+  .status-pill.passed{background:rgba(117,224,117,0.12);color:var(--green)}
+  .status-pill.failed{background:rgba(255,107,107,0.12);color:var(--bad)}
+
   /* Center container for title + status visuals */
   .center-wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
 
-  /* Bars grid */
+  /* Bars grid (discord-like longer bars) */
   .bars {
     display:flex;
     align-items:flex-end;
-    gap:4px;
-    width:540px;       /* adjust width as you wish */
-    height:72px;       /* height of the bar area */
+    gap:6px;
+    width:640px;       /* adjust width as you wish */
+    height:86px;       /* height of the bar area */
     margin-top:6px;
+    padding:8px 12px;
+    border-radius:12px;
+    background:linear-gradient(0deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6) inset;
   }
   .bar {
-    width:6px;
+    width:12px;
     background:rgba(255,255,255,0.06);
-    border-radius:3px 3px 0 0;
-    transition:height 400ms ease, background 300ms ease;
+    border-radius:8px;
+    transition:height 400ms cubic-bezier(.2,.9,.3,1), background 300ms;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    min-height:6px;
+    display:inline-block;
   }
-  .bar.good{background:var(--green)}
-  .bar.slow{background:var(--warn)}
-  .bar.fail{background:var(--bad)}
+  .bar.good{background:linear-gradient(180deg, rgba(117,224,117,0.95), rgba(37,165,37,0.9))}
+  .bar.slow{background:linear-gradient(180deg, rgba(241,162,8,0.95), rgba(200,120,20,0.9))}
+  .bar.fail{background:linear-gradient(180deg, rgba(255,107,107,0.95), rgba(200,70,70,0.9))}
 
-  /* small info row */
+  /* small info now removed from center and moved bottom-left */
   .info {font-size:0.95rem;color:rgba(199,203,203,0.9)}
 
   /* sparkline canvas */
-  canvas{background:transparent;width:540px;height:80px;display:block}
+  canvas{background:transparent;width:640px;height:120px;display:block;border-radius:6px}
 
-  @media(max-width:560px){
+  /* vulnerability label style */
+  .vuln-label {
+    position:absolute; transform:translateY(-8px);
+    background:rgba(255,50,50,0.07); padding:2px 8px;border-radius:6px;
+    font-size:0.75rem;color:var(--bad);backdrop-filter: blur(2px);
+  }
+
+  @media(max-width:700px){
     .bars, canvas{width:92vw}
     h1{font-size:2.4rem}
     .status-text{font-size:1.1rem}
@@ -68,78 +103,201 @@
     <!-- Bars (will be filled by JS) -->
     <div id="bars" class="bars" aria-hidden="true"></div>
 
-    <!-- small meta -->
-    <div class="info" id="meta">Checking...</div>
-
     <!-- sparkline for response time -->
-    <canvas id="spark" width="540" height="80"></canvas>
+    <div style="position:relative; width:640px; max-width:92vw;">
+      <canvas id="spark" width="640" height="120"></canvas>
+      <!-- vulnerability marker will be placed dynamically -->
+    </div>
   </div>
 
   <div class="bottom-left pos">
-    <p id="scrapeStatus" class="status-text">Scraping check (<span>#: </span><span class="status">Passed</span>)</p>
+    <div class="meta-block">
+      <!-- moved meta here -->
+      <div id="meta" class="meta-row">
+        <div><b>Last</b><span id="meta-last">—</span></div>
+        <div><b>Samples</b><span id="meta-samples">0</span></div>
+        <div><b>Avg</b><span id="meta-avg">—</span></div>
+      </div>
+      <div class="meta-row">
+        <div><b>P95</b><span id="meta-p95">—</span></div>
+        <div><b>Failures</b><span id="meta-fails">0</span></div>
+        <div><b>Uptime</b><span id="meta-up">—</span></div>
+      </div>
+
+      <!-- Scraping check + status pill -->
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
+        <p id="scrapeStatus" class="status-text" style="margin:0">Scraping check (<span>#: </span><span class="status">Passed</span>)</p>
+        <div id="scrapePill" class="status-pill neutral">Passed</div>
+      </div>
+    </div>
   </div>
 
 <script>
 /*
- Minimal renderer:
- - Expects GET /status_history => { history: [ <ms|null> , ... ] }
- - history newest at the end; values: number = response time in ms, null = failed request.
- - Bar color thresholds:
+ - API: GET /status_history => { history: [ <ms|null> , ... ] }  newest at the end
+ - Bars threshold:
      ms === null -> fail (red)
      ms > 1000 -> fail
      ms > 300  -> slow (orange)
      else -> good (green)
  - Polls every 5s.
+ - Extra metrics: avg, p95, failures, uptime %
+ - Sparkline uses area fill + moving average + peak markers for "vulnerabilities"
 */
 
 const API = '/status_history';    // replace if necessary
 const POLL_MS = 5000;
-const MAX_BARS = 80; // number of bars to show (resize CSS width if you change)
+const MAX_BARS = 48; // number of bars to show
 
 const barsEl = document.getElementById('bars');
-const metaEl = document.getElementById('meta');
+const metaLast = document.getElementById('meta-last');
+const metaSamples = document.getElementById('meta-samples');
+const metaAvg = document.getElementById('meta-avg');
+const metaP95 = document.getElementById('meta-p95');
+const metaFails = document.getElementById('meta-fails');
+const metaUp = document.getElementById('meta-up');
 const topStatusEl = document.getElementById('topStatus');
 const spark = document.getElementById('spark');
 const ctx = spark.getContext('2d');
+const scrapePill = document.getElementById('scrapePill');
 
 function makeBars(count){
+  // keep count stable (do not re-create each time if same)
+  const cur = barsEl.children.length;
+  if(cur === count) return;
   barsEl.innerHTML = '';
   for(let i=0;i<count;i++){
     const b = document.createElement('div');
     b.className = 'bar';
-    b.style.height = '4px';
+    b.style.height = '8px';
     barsEl.appendChild(b);
   }
 }
 
-// draw sparkline given an array of numbers (null -> zero / gap)
+// UTILS: numeric stats (handles nulls)
+function numericStats(arr){
+  const nums = arr.filter(v=>v!=null).slice();
+  nums.sort((a,b)=>a-b);
+  const n = nums.length;
+  if(n===0) return {avg:null,median:null,p95:null,max:null};
+  const sum = nums.reduce((s,x)=>s+x,0);
+  const avg = sum / n;
+  const median = (n%2===1) ? nums[(n-1)/2] : (nums[n/2 -1]+nums[n/2])/2;
+  const p95idx = Math.floor(0.95*(n-1));
+  const p95 = nums[p95idx];
+  const max = nums[n-1];
+  return {avg,median,p95,max};
+}
+
+// draw sparkline given an array of numbers (null -> treated specially)
 function drawSpark(data){
   const w = spark.width, h = spark.height;
   ctx.clearRect(0,0,w,h);
   if(!data || data.length===0) return;
-  // convert to numbers (failed -> max)
-  const nums = data.map(v => v===null ? Math.max(...data.filter(x=>x!=null), 2000 || 2000) : v);
-  const max = Math.max(...nums, 200); // avoid zero
-  const min = Math.min(...nums);
-  // compute step
-  const stepX = w / Math.max(1, data.length-1);
+  // compute numeric copy for metrics and for scaling
+  const filtered = data.filter(x=>x!=null);
+  const maxRaw = Math.max(...filtered, 200);
+  const minRaw = Math.min(...filtered, 0);
+  // scale function: use soft log-ish transform to emphasize small differences but keep peaks visible
+  const transform = v => Math.log1p(Math.max(0, v))/Math.log1p(maxRaw || 1);
+
+  // compute moving average (window 6)
+  const ma = [];
+  const win = 6;
+  for(let i=0;i<data.length;i++){
+    const window = [];
+    for(let j=i-win+1;j<=i;j++){
+      if(j>=0 && data[j]!=null) window.push(data[j]);
+    }
+    ma.push(window.length ? window.reduce((s,x)=>s+x,0)/window.length : null);
+  }
+
+  // area fill under curve (using transformed values)
+  ctx.beginPath();
+  for(let i=0;i<data.length;i++){
+    const v = data[i];
+    const x = (i/(data.length-1)) * (w-4) + 2;
+    const t = v==null ? 1 : transform(v);
+    const y = h - (t * (h-18)) - 8;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  // close to bottom
+  ctx.lineTo(w-2,h-6);
+  ctx.lineTo(2,h-6);
+  ctx.closePath();
+  // gradient fill
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, 'rgba(117,224,117,0.10)');
+  grad.addColorStop(1, 'rgba(117,224,117,0.02)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // draw jittery line (actual values)
   ctx.lineWidth = 2;
   ctx.beginPath();
   for(let i=0;i<data.length;i++){
-    const val = data[i];
-    const y = h - (( (val===null?max:val) - min) / (max-min || 1) * (h-6)) - 3;
-    const x = i*stepX;
+    const v = data[i];
+    const x = (i/(data.length-1)) * (w-4) + 2;
+    const t = v==null ? 1 : transform(v);
+    const jitter = (Math.random()-0.5) * 0.006; // tiny jitter to show variation
+    const y = h - ((t + jitter) * (h-18)) - 8;
     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   }
   ctx.strokeStyle = 'rgba(117,224,117,0.95)';
   ctx.stroke();
+
+  // draw moving average line (thinner, faded)
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for(let i=0;i<ma.length;i++){
+    const v = ma[i];
+    const x = (i/(ma.length-1)) * (w-4) + 2;
+    const t = v==null ? 1 : transform(v);
+    const y = h - (t * (h-18)) - 8;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.stroke();
+
+  // highlight "vulnerabilities": points above p95 or nulls (fail)
+  const stats = numericStats(data);
+  const p95threshold = stats.p95 || Math.max(300, stats.avg || 300);
+  const peaks = [];
+  for(let i=0;i<data.length;i++){
+    const v = data[i];
+    if(v==null || v > p95threshold) peaks.push({i,v});
+  }
+  // remove existing vuln labels
+  document.querySelectorAll('.vuln-label').forEach(n=>n.remove());
+  // draw dots and labels for top 3 peaks
+  const topPeaks = peaks.slice(-6);
+  ctx.fillStyle = 'rgba(255,80,80,0.95)';
+  for(const p of topPeaks){
+    const i = p.i;
+    const x = (i/(data.length-1)) * (w-4) + 2;
+    const t = p.v==null ? 1 : transform(p.v);
+    const y = h - (t * (h-18)) - 8;
+    // dot
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI*2);
+    ctx.fill();
+    // label
+    const label = document.createElement('div');
+    label.className = 'vuln-label';
+    label.style.left = Math.min(Math.max(4, x - 40), w - 80) + 'px';
+    label.style.top = (spark.getBoundingClientRect().top + window.scrollY + y - 32) + 'px';
+    label.textContent = p.v == null ? 'failure' : Math.round(p.v) + ' ms';
+    document.body.appendChild(label);
+    // remove label after next redraw (we clean above)
+  }
 }
 
 // map ms -> class & height
 function applyToBars(values){
   const bars = Array.from(barsEl.children);
   const samples = values.slice(-bars.length); // take last N
-  const maxMS = Math.max(...samples.filter(x=>x!=null), 1000);
+  const numeric = samples.filter(x=>x!=null);
+  const maxMS = Math.max(...numeric, 1000);
   for(let i=0;i<bars.length;i++){
     const v = samples[i] !== undefined ? samples[i] : null;
     const b = bars[i];
@@ -150,7 +308,7 @@ function applyToBars(values){
     } else {
       // height proportional (small ms -> short bar)
       const pct = Math.min(1, v / Math.max(500, maxMS));
-      h = Math.max(4, pct * barsEl.clientHeight);
+      h = Math.max(6, pct * barsEl.clientHeight);
       if (v > 1000) { b.className = 'bar fail'; }
       else if (v > 300) { b.className = 'bar slow'; }
       else { b.className = 'bar good'; }
@@ -159,25 +317,62 @@ function applyToBars(values){
   }
 }
 
+function formatMs(v){
+  if(v === null) return 'fail';
+  if(v === undefined) return '—';
+  return Math.round(v) + ' ms';
+}
+
 async function fetchAndRender(){
   try{
     const res = await fetch(API, {cache:'no-store'});
     if (!res.ok) throw new Error('bad status '+res.status);
     const j = await res.json();
     const hist = Array.isArray(j.history) ? j.history : [];
-    // update bars and spark
+    // ensure enough bars
     makeBars(Math.min(MAX_BARS, Math.max(8, hist.length || 24)));
     applyToBars(hist);
-    drawSpark(hist.slice(-Math.min(hist.length, 60)));
-    // meta text
+    // draw spark with last up to 120 samples (or histogram)
+    drawSpark(hist.slice(-120));
+
+    // compute metrics
     const last = hist.length ? hist[hist.length-1] : null;
-    metaEl.textContent = `Last: ${last===null ? 'fail' : last + ' ms'} — samples: ${hist.length}`;
+    const n = hist.length;
+    const failures = hist.filter(x=>x==null).length;
+    const uptimePct = n ? Math.round(((n - failures)/n)*10000)/100 : 100;
+    const stats = numericStats(hist);
+    metaLast.textContent = formatMs(last);
+    metaSamples.textContent = n;
+    metaAvg.textContent = stats.avg == null ? '—' : Math.round(stats.avg) + ' ms';
+    metaP95.textContent = stats.p95 == null ? '—' : Math.round(stats.p95) + ' ms';
+    metaFails.textContent = failures;
+    metaUp.textContent = uptimePct + '%';
+
+    // top status text + color
     topStatusEl.textContent = (last===null ? 'Bot offline' : 'Bot is alive!!...');
     topStatusEl.style.color = (last===null ? 'var(--bad)' : 'var(--green)');
+
+    // scrape pill: "Passed" green if bot online; neutral if offline but scraping says passed
+    const scrapePassed = true; // keep the textual "Passed" as before, but color depends on last
+    if(last !== null){
+      scrapePill.className = 'status-pill passed';
+      scrapePill.textContent = 'Passed — Online';
+    } else {
+      scrapePill.className = 'status-pill neutral';
+      scrapePill.textContent = 'Passed — Offline';
+    }
+
   }catch(e){
-    metaEl.textContent = 'Unable to fetch status';
+    metaLast.textContent = '—';
+    metaSamples.textContent = 0;
+    metaAvg.textContent = '—';
+    metaP95.textContent = '—';
+    metaFails.textContent = 0;
+    metaUp.textContent = '0%';
     topStatusEl.textContent = 'Bot offline';
     topStatusEl.style.color = 'var(--bad)';
+    scrapePill.className = 'status-pill failed';
+    scrapePill.textContent = 'Error';
     console.error(e);
   } finally {
     setTimeout(fetchAndRender, POLL_MS);
@@ -185,7 +380,7 @@ async function fetchAndRender(){
 }
 
 // init
-makeBars(40);
+makeBars( Math.min(MAX_BARS, 40) );
 fetchAndRender();
 </script>
 </body>
